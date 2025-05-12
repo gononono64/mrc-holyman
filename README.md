@@ -47,10 +47,12 @@ Smack your friends to health or bring them back from beyond with the mysterious 
     weight = 1000,
     durability = 0.1,
 },
+
 ---
 
 ## 📸 Preview
 COMING SOON!!!
+
 ---
 
 ## ❓ Why?
