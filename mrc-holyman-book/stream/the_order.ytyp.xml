@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<CMapTypes>
+  <archetypes>
+    <Item type="CBaseArchetypeDef">
+      <lodDist value="60" />
+      <flags value="0" />
+      <specialAttribute value="0" />
+      <bbMin x="-0.02334505" y="-0.027245522" z="-0.037612006" />
+      <bbMax x="0.16660494" y="0.022558779" z="0.20429884" />
+      <bsCentre x="0.07162994" y="-0.0023433715" z="0.08334342" />
+      <bsRadius value="0.15579018" />
+      <hdTextureDist value="40" />
+      <name>w_me_book</name>
+      <textureDictionary>w_me_book</textureDictionary>
+      <physicsDictionary>w_me_book</physicsDictionary>
+      <assetType>ASSET_TYPE_DRAWABLE</assetType>
+      <assetName>w_me_book</assetName>
+    </Item>
+  </archetypes>
+  <name>the_order</name>
+</CMapTypes>
