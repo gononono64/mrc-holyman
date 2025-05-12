@@ -17,9 +17,10 @@ Smack your friends to health or bring them back from beyond with the mysterious 
 
 ## 📦 Installation
 
-1. Drag and drop `mrc-healingbook` into your `resources` folder  
-2. Add the image (`weapon_candycande.png`) to your inventory's image folder  
-3. Add the item data using the config for your inventory system below  
+1. Drag and drop `mrc-holyman` and `mrc-holyman-book` into your `resources` folder
+2. Add `ensure mrc-holyman-book` and `ensure mrc-holyman` to your server.cfg
+3. Add the image (`weapon_book.png`) to your inventory's image folder  
+4. Add the item data using the config for your inventory system below  
 
 ---
 
@@ -28,13 +29,13 @@ Smack your friends to health or bring them back from beyond with the mysterious 
 ### 🧱 QB-Core
 
 ```lua
-['weapon_book'] = {
+['WEAPON_BOOK'] = {
     ['name'] = 'weapon_book',
     ['label'] = 'Holy Book',
     ['weight'] = 1000,
     ['type'] = 'weapon',
     ['ammotype'] = nil,
-    ['image'] = 'weapon_candycande',
+    ['image'] = 'weapon_book.png',
     ['unique'] = true,
     ['useable'] = true,
     ['description'] = 'Candy Cane'
