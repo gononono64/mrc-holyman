@@ -41,13 +41,16 @@ Smack your friends to health or bring them back from beyond with the mysterious 
     ['description'] = 'Candy Cane'
 },
 ```
+
 ### 🌀 Ox Inventory
 
+```lua
 ['WEAPON_BOOK'] = {
     label = 'Holy Book',
     weight = 1000,
     durability = 0.1,
 },
+```
 
 ---
 
