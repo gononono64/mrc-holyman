@@ -18,9 +18,10 @@ Smack your friends to health or bring them back from beyond with the mysterious 
 ## 📦 Installation
 
 1. Drag and drop `mrc-holyman` and `mrc-holyman-book` into your `resources` folder
-2. Add `ensure mrc-holyman-book` and `ensure mrc-holyman` to your server.cfg
-3. Add the image (`weapon_book.png`) to your inventory's image folder  
-4. Add the item data using the config for your inventory system below  
+2. Download and install [community_bridge](https://github.com/The-Order-Of-The-Sacred-Framework/community_bridge/tree/dev)
+3. Add `ensure community_bridge` before `ensure mrc-holyman-book` and `ensure mrc-holyman` to your server.cfg
+4. Add the image (`weapon_book.png`) to your inventory's image folder  
+5. Add the item data using the config for your inventory system below  
 
 ---
 
