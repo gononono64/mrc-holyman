@@ -1,96 +1,82 @@
 
 local Pedistals = {}
 
-function StartRitual(id, targetCoords)
-    local pedistal = Pedistals[id]
-    if not pedistal then return end
-    Bridge.Marker.CreateBulk(pedistal.markers)
-    Bridge.Particle.CreateBulk(pedistal.particles)
-  
-    TriggerClientEvent("mrc-holyman:client:StartRitual", -1, Pedistals[id])
+local function CandleId(id, index)
+    return string.format("%s-:Candle-%s", id, index)
 end
 
-function StopRitual(id)   
+function StartRitual(id)
+    local pedistal = Pedistals[id]
+    if not pedistal then return end
+
+    Bridge.Entity.Set(id, { holyActive = true })
+    TriggerClientEvent("mrc-holyman:client:StartRitual", -1, pedistal)
+end
+
+function StopRitual(id)
     RemovePedistal(id)
-    Pedistals[id] = nil
     return true
 end
 
 function CreatePedistal(id, target, coords)
     local config = Config.ReviveRitual
-    Bridge.ServerEntity.Create(id, 'object', config.Pedistal.model, coords, config.Pedistal.rotationOffset)
-    Bridge.ServerEntity.TriggerActions(id, {   
-        {name = 'Freeze', params = {true}},
-        {name = 'BobUpAndDown', params = {0.5, 0.1}},
-        {name = 'Target', params = {'pedestal', target}},
-        {name = 'Track', params = {'pedestal'}},
-    }, coords)
+    local pedistalCfg = config.Pedistal
+    local spawnDistance = pedistalCfg.spawnDistance or 100.0
+
+    local candlesCfg = pedistalCfg.candles or {}
+    local models = candlesCfg.models or {}
+    local candleOffset = candlesCfg.offset or vector3(0.0, 0.0, -0.25)
 
     local data = Pedistals[id] or {}
-    data.propIds = data.propIds or {}
-    data.markers = data.markers or {}
-    data.particles = data.particles or {}
+    data.propIds = {}
+    data.coords = coords
 
-    
-    for i = 1, 5 do 
-        local model = i==5 and 'v_prop_floatcandle' or 'v_res_fa_candle0'..i
-        local propId = id..i
-        Bridge.ServerEntity.Create(propId, 'object', model, coords - vector3(0.0, 0.0, 0.25), vector3(0.0, 0.0, 0.0), {freeze = true})
-        Bridge.ServerEntity.TriggerActions(propId, {     
-            {name = 'Collisions', params = {false, false}},           
-            {name = 'Freeze', params = {true}},
-            {name = 'Collisions', params = {true}},    
-            {name = 'Circle', params = {2.0, 1.25}},
-            {name = 'Track', params = {'pedestal'}},
-        }, coords)
+    local entities = {
+        {
+            id = id,
+            entityType = 'object',
+            model = pedistalCfg.model,
+            coords = coords,
+            rotation = pedistalCfg.rotationOffset or vector3(0.0, 0.0, 0.0),
+            spawnDistance = spawnDistance,
+            freeze = true,
+            holyman = { role = 'pedestal', target = target },
+        }
+    }
+
+    for k, v in ipairs(models) do
+        local propId = CandleId(id, k)
+        entities[#entities + 1] = {
+            id = propId,
+            entityType = 'object',
+            model = v,
+            coords = coords + candleOffset,
+            rotation = vector3(0.0, 0.0, 0.0),
+            spawnDistance = spawnDistance,
+            freeze = true,
+            holyman = { role = 'candle', index = k, count = #models },
+        }
         table.insert(data.propIds, propId)
     end
-    
-    local makerConfig = Bridge.Tables.DeepClone(config.Pedistal.markers)
-    for k, v in pairs(makerConfig) do
-        if type(v) == "table" then
-            local derpa = string.format("%s-:Marker-%s", id, k)
-            v.id = derpa
-            v.position =  coords + (v.offset or vector3(0.0, 0.0, 0.0))
-            v.offset = nil
-            v.type = v.type or 1
-            v.size = v.size or vector3(0.5, 0.5, 0.5)
-            v.color = v.color or vector3(255, 0, 0)
-            v.alpha = v.alpha or 150
-            v.bobUpAndDown = v.bobUpAndDown or true
-            v.drawDistance = v.drawDistance or 50.0
-            table.insert(data.markers, v)
-        end            
-    end
-    local particleConfig = Bridge.Tables.DeepClone(config.Pedistal.particles)
-    for k, v in pairs(particleConfig) do
-        if type(v) == "table" then
-            v.id = string.format("%s-:Particle-%s", id, k)
-            v.position = coords + (v.offset or vector3(0.0, 0.0, 0.0))
-            v.offset = nil
-            v.rotation = data.rotation or vector3(0, 0, 0)      
-            table.insert(data.particles, v)
-        end            
-    end
+
+    -- One CreateEntities event for the pedestal and every candle, instead of one per prop.
+    Bridge.Entity.CreateBulk(entities)
+
     Pedistals[id] = data
     return id
 end
 
 function RemovePedistal(id)
-    local pedestal = Pedistals[id]
-    if not pedestal then return end
-    for k, v in pairs(pedestal.propIds) do
-        Bridge.ServerEntity.Delete(v)
-    end
-    Bridge.ServerEntity.Delete(id)
+    local pedistal = Pedistals[id]
+    if not pedistal then return end
 
-    Bridge.Marker.RemoveBulk(pedestal.markers)
-    Bridge.Particle.RemoveBulk(pedestal.particles)
+    for _, propId in pairs(pedistal.propIds or {}) do
+        Bridge.Entity.Destroy(propId)
+    end
+    Bridge.Entity.Destroy(id)
+
     Pedistals[id] = nil
 end
-
-
-
 
 AddEventHandler("weaponDamageEvent", function(src, data)
     src = tonumber(src)
@@ -120,7 +106,6 @@ AddEventHandler("weaponDamageEvent", function(src, data)
         local coords = Bridge.Math.GetOffsetFromMatrix(rawcoords, rotation, offset)
         CreatePedistal(id, target, coords)
 
-        Pedistals[id] = Pedistals[id] or {}
         Pedistals[id].target = target
         Pedistals[id].src = src
         Pedistals[id].id = id
@@ -128,7 +113,7 @@ AddEventHandler("weaponDamageEvent", function(src, data)
         Pedistals[id].cultists[tostring(src)] = true
         Pedistals[id].count = 1
         if config.ParticipantsNeeded <= 1 then
-            StartRitual(id, coords)            
+            StartRitual(id)
         end
         Bridge.Notify.SendNotify(src, "You have placed a holy pedestal", "success")
         return
@@ -142,7 +127,7 @@ end)
 RegisterNetEvent("mrc-holyman:server:ParticipateInRitual", function(id, target)
     local pedestal = Pedistals[id]
     if not pedestal then return end
-    
+
     local src = source
     local ped = GetPlayerPed(src)
     local targetPed = GetPlayerPed(pedestal.target)
@@ -150,7 +135,7 @@ RegisterNetEvent("mrc-holyman:server:ParticipateInRitual", function(id, target)
     local targetCoords = GetEntityCoords(targetPed)
     local distance = #(targetCoords - pedCoords)
     if distance > 5.0 then return Bridge.Notify.SendNotify(src, "You are too far away", "error") end
-    
+
     local strsrc = tostring(src)
     if pedestal.cultists[strsrc] then
         Bridge.Notify.SendNotify(src, "You are already participating in the ritual", "error")
@@ -160,10 +145,8 @@ RegisterNetEvent("mrc-holyman:server:ParticipateInRitual", function(id, target)
     pedestal.count = pedestal.count + 1
 
     local config = Config.ReviveRitual
-    local participantsNeeded = config.ParticipantsNeeded
-    if pedestal.count < participantsNeeded then return end
-    TriggerClientEvent("mrc-holyman:client:StartRitual", -1, pedestal)
-     -- Define the marker's properties, using playerCoords as the base position
+    if pedestal.count < config.ParticipantsNeeded then return end
+    StartRitual(id)
 end)
 
 RegisterNetEvent('mrc-holyman:server:RitualDone', function(id)
@@ -172,11 +155,18 @@ RegisterNetEvent('mrc-holyman:server:RitualDone', function(id)
     if not pedestal then return end
     local isPriest = pedestal.src == src
     local isCultist = pedestal.cultists[tostring(src)]
-    if isPriest or isCultist then 
+    if isPriest or isCultist then
         return StopRitual(id)
     end
     local target = pedestal.target
     if not target or src ~= target then return end
     Bridge.Framework.RevivePlayer(target)
     StopRitual(id)
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    local ids = {}
+    for id in pairs(Pedistals) do table.insert(ids, id) end
+    for _, id in pairs(ids) do RemovePedistal(id) end
 end)

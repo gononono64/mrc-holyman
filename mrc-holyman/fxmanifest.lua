@@ -1,6 +1,8 @@
 fx_version 'cerulean'
 games {'gta5'}
-description 'Add-on weapon generated using vWeaponsToolkit'
+description 'Holy man revive ritual'
+
+lua54 'yes'
 
 shared_script {
 	'bridge.lua',
@@ -13,3 +15,5 @@ client_scripts {
 server_scripts {
 	'server/*.lua',
 }
+
+dependency 'community_bridge'

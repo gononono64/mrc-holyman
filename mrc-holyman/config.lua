@@ -8,7 +8,7 @@ Config.Healing = {
 Config.ReviveRitual = {
     Label = "Revive %s",
     Icon = "fa-solid fa-heart-pulse",
-    ParticipantsNeeded = 0, -- Number of players needed to revive a player
+    ParticipantsNeeded = 1, -- Number of players needed to revive a player
     Time = 0,-- Time in seconds to revive a player
     Cost = 10,-- Distance in meters to revive a player
     HealAmount = 500,-- Health to revive the player
@@ -67,10 +67,30 @@ Config.ReviveRitual = {
         model = 'v_ilev_mp_bedsidebook',
         offset = vector3(0.0, 0.0, 0.0), -- Offset of the book from the pedestal
         rotationOffset = vector3(180.0, 0.0, 0.0), -- Rotation of the book
-        particles = {
+        spawnDistance = 100.0, -- Distance at which clients spawn the pedestal/candle props
+        bob = { -- Bobbing motion applied to the pedestal prop
+            speed = 0.5,
+            height = 0.1,
+        },
+        candles = { -- Candles that orbit the pedestal
+            models = {
+                'v_res_fa_candle01',
+                'v_res_fa_candle02',
+                'v_res_fa_candle03',
+                'v_res_fa_candle04',
+                'v_prop_floatcandle',
+            },
+            offset = vector3(0.0, 0.0, -0.25), -- Spawn offset from the pedestal
+            radius = 2.0, -- Orbit radius
+            speed = 1.25, -- Orbit speed
+            collisions = false, -- Collisions on the candle props
+        },
+        particles = { -- Attached to the pedestal prop once the ritual starts
             {
                 dict = 'scr_sr_adversary',
                 ptfx = 'scr_sr_lg_weapon_highlight',
+                offset = vector3(0.0, 0.0, 0.0),
+                rotation = vector3(0.0, 0.0, 0.0),
                 size = 1.0,
                 color = vector3(255, 255, 255),
                 looped = true,
@@ -79,13 +99,13 @@ Config.ReviveRitual = {
         },
         markers = {
             {
-                type = 1, -- Type of marker
+                type = 1, -- Marker type (mapped to the bridge 'marker' field)
                 offset = vector3(0.0, 0.0, -2.0), -- Offset of the marker from the pedestal
                 color = vector3(255, 0, 0), -- Color of the marker
                 size = vector3(4.0, 4.0, 2.5), -- Scale of the marker
                 alpha = 150, -- Alpha of the marker
-                duration = -1, -- Duration of the marker
-                distance = 2.0, -- Distance to show the marker
+                bobUpAndDown = false,
+                drawDistance = 50.0,
             }
         }
     },
