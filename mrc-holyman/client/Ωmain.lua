@@ -99,7 +99,88 @@ local function StartBob(entityData, speed, height)
     end)
 end
 
-local function StartCircle(entityData, radius, speed, index, count)
+local function CandleConfig()
+    return PedistalConfig().candles or {}
+end
+
+local function OrbitPosition(entityData)
+    local info = entityData.holyman or {}
+    local candles = CandleConfig()
+    local count = math.max(info.count or 1, 1)
+    local angle = ((info.index or 1) - 1) * ((math.pi * 2) / count) + (candles.speed or 1.25) * (GetGameTimer() / 1000)
+    return Bridge.LA.Circle(angle, candles.radius or 2.0, entityData.coords)
+end
+
+local function MoveCandle(entity, pos)
+    FreezeEntityPosition(entity, false)
+    SetEntityCoords(entity, pos.x, pos.y, pos.z, false, false, false, false)
+    FreezeEntityPosition(entity, true)
+end
+
+local function PlaySmoke(coords, smoke)
+    if not smoke or not smoke.dict or not smoke.ptfx then return end
+    RequestNamedPtfxAsset(smoke.dict)
+    local timeout = GetGameTimer() + 2000
+    while not HasNamedPtfxAssetLoaded(smoke.dict) and GetGameTimer() < timeout do Wait(0) end
+    if not HasNamedPtfxAssetLoaded(smoke.dict) then return end
+    UseParticleFxAssetNextCall(smoke.dict)
+    StartParticleFxNonLoopedAtCoord(smoke.ptfx, coords.x, coords.y, coords.z, 0.0, 0.0, 0.0, smoke.scale or 1.0, false, false, false)
+end
+
+local function IsCandleAlive(entityData, entity)
+    return Circling[entityData.id] and entityData.spawned == entity and DoesEntityExist(entity)
+end
+
+local function LaunchCandle(entityData, entity)
+    local info = entityData.holyman or {}
+    local launch = CandleConfig().launch or {}
+    local origin = info.origin or entityData.coords
+
+    local elapsed = GetGameTimer() - (entityData.holyActiveAt or GetGameTimer())
+    local remaining = (info.delay or 0) - elapsed
+    if remaining > 0 then Wait(remaining) end
+    if not IsCandleAlive(entityData, entity) then return false end
+
+    local popStart = origin + (launch.popOffset or vector3(0.0, 0.0, 0.0))
+    local popEnd = popStart + vector3(0.0, 0.0, launch.popHeight or 0.35)
+    PlaySmoke(origin + (launch.smokeOffset or vector3(0.0, 0.0, 0.35)), launch.smoke)
+
+    MoveCandle(entity, popStart)
+    SetEntityVisible(entity, true, false)
+
+    -- Pop: quick rise out of the pedestal.
+    local popTime = launch.popDuration or 250
+    local start = GetGameTimer()
+    while IsCandleAlive(entityData, entity) do
+        local t = math.min((GetGameTimer() - start) / popTime, 1.0)
+        local ease = 1.0 - (1.0 - t) * (1.0 - t)
+        MoveCandle(entity, popStart + (popEnd - popStart) * ease)
+        if t >= 1.0 then break end
+        Wait(0)
+    end
+
+    -- Jump: arc toward the (moving) orbit slot, flipping on the way.
+    local jumpTime = launch.jumpDuration or 900
+    local jumpHeight = launch.jumpHeight or 1.25
+    local flips = launch.flips or 1
+    start = GetGameTimer()
+    while IsCandleAlive(entityData, entity) do
+        local t = math.min((GetGameTimer() - start) / jumpTime, 1.0)
+        local slot = OrbitPosition(entityData)
+        local pos = popEnd + (slot - popEnd) * t + vector3(0.0, 0.0, jumpHeight * 4.0 * t * (1.0 - t))
+        MoveCandle(entity, pos)
+        SetEntityRotation(entity, 360.0 * flips * t, 0.0, 0.0, 2, true)
+        if t >= 1.0 then break end
+        Wait(0)
+    end
+
+    if not IsCandleAlive(entityData, entity) then return false end
+    SetEntityRotation(entity, 0.0, 0.0, 0.0, 2, true)
+    entityData.holyLaunched = true
+    return true
+end
+
+local function StartCandle(entityData)
     local id = entityData.id
     if Circling[id] then return end
     local entity = entityData.spawned
@@ -107,14 +188,13 @@ local function StartCircle(entityData, radius, speed, index, count)
     Circling[id] = true
 
     CreateThread(function()
-        local center = GetEntityCoords(entity)
-        local angle = (index - 1) * ((math.pi * 2) / math.max(count, 1))
-        while Circling[id] and entityData.spawned == entity and DoesEntityExist(entity) do
-            local pos = Bridge.LA.Circle(angle, radius, center)
-            FreezeEntityPosition(entity, false)
-            SetEntityCoords(entity, pos.x, pos.y, pos.z, false, false, false, false)
-            FreezeEntityPosition(entity, true)
-            angle = angle + speed * GetFrameTime()
+        if not entityData.holyLaunched and not LaunchCandle(entityData, entity) then
+            Circling[id] = nil
+            return
+        end
+        SetEntityVisible(entity, true, false)
+        while IsCandleAlive(entityData, entity) do
+            MoveCandle(entity, OrbitPosition(entityData))
             Wait(0)
         end
         Circling[id] = nil
@@ -140,7 +220,19 @@ local function OnHolySpawn(entityData)
         if candles.collisions == false then
             SetEntityCollision(entityData.spawned, false, false)
         end
-        StartCircle(entityData, candles.radius or 2.0, candles.speed or 1.25, info.index or 1, info.count or 1)
+        if entityData.holyActive then
+            local launch = candles.launch or {}
+            entityData.holyActiveAt = entityData.holyActiveAt or GetGameTimer()
+            local launchEnd = (info.delay or 0) + (launch.popDuration or 250) + (launch.jumpDuration or 900)
+            if GetGameTimer() - entityData.holyActiveAt > launchEnd then
+                entityData.holyLaunched = true
+            else
+                SetEntityVisible(entityData.spawned, false, false)
+            end
+            return StartCandle(entityData)
+        end
+        -- Hidden until the ritual starts and the candle launches out of the pedestal.
+        SetEntityVisible(entityData.spawned, false, false)
     end
 end
 
@@ -187,6 +279,14 @@ Bridge.Entity.SetOnCreate('holyman', function(entityData)
             end
             StartParticles(data)
             StartMarkers(data)
+        end
+    end
+
+    if info.role == 'candle' then
+        entityData.OnHolyActive = function(data, _, value)
+            if not value then return end
+            data.holyActiveAt = data.holyActiveAt or GetGameTimer()
+            StartCandle(data)
         end
     end
 
@@ -309,6 +409,8 @@ RegisterNetEvent("mrc-holyman:client:StartRitual", function(pedestal)
 
     local targetActionsCfg = reviveRitualCfg.Followers or {}
     local targetMainAnimCfg = targetActionsCfg.Animation or {}
+
+    Wait(reviveRitualCfg.ReviveHold or 7000)
 
     local effectDuration = targetActionsCfg.EffectDuration or 5000
     local waitTime = math.random(targetActionsCfg.WaitTimeMin or 1000, targetActionsCfg.WaitTimeMax or 2000)

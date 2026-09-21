@@ -10,6 +10,9 @@ function StartRitual(id)
     if not pedistal then return end
 
     Bridge.Entity.Set(id, { holyActive = true })
+    for _, propId in pairs(pedistal.propIds or {}) do
+        Bridge.Entity.Set(propId, { holyActive = true })
+    end
     TriggerClientEvent("mrc-holyman:client:StartRitual", -1, pedistal)
 end
 
@@ -26,6 +29,9 @@ function CreatePedistal(id, target, coords)
     local candlesCfg = pedistalCfg.candles or {}
     local models = candlesCfg.models or {}
     local candleOffset = candlesCfg.offset or vector3(0.0, 0.0, -0.25)
+    local launchCfg = candlesCfg.launch or {}
+    local delayMin = launchCfg.delayMin or 250
+    local delayMax = math.max(launchCfg.delayMax or 2500, delayMin)
 
     local data = Pedistals[id] or {}
     data.propIds = {}
@@ -54,7 +60,7 @@ function CreatePedistal(id, target, coords)
             rotation = vector3(0.0, 0.0, 0.0),
             spawnDistance = spawnDistance,
             freeze = true,
-            holyman = { role = 'candle', index = k, count = #models },
+            holyman = { role = 'candle', index = k, count = #models, origin = coords, delay = math.random(delayMin, delayMax) },
         }
         table.insert(data.propIds, propId)
     end

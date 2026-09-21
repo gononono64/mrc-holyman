@@ -13,6 +13,7 @@ Config.ReviveRitual = {
     Cost = 10,-- Distance in meters to revive a player
     HealAmount = 500,-- Health to revive the player
     WeaponDamageCheckDistance = 2.0, -- Max distance for weapon damage effect to apply healing
+    ReviveHold = 7000, -- ms after the ritual starts before the target's revive sequence begins (keep > candle delayMax + popDuration + jumpDuration)
     Followers = {
         ProgressBar = { -- General progress bar settings for all followers during the ritual
             duration = 5000,
@@ -84,6 +85,18 @@ Config.ReviveRitual = {
             radius = 2.0, -- Orbit radius
             speed = 1.25, -- Orbit speed
             collisions = false, -- Collisions on the candle props
+            launch = { -- Candles are hidden until the ritual starts, then each one pops out of the pedestal and jumps to its orbit slot
+                delayMin = 250, -- ms, random per-candle launch delay (picked by the server so all clients match)
+                delayMax = 2500,
+                smoke = { dict = 'scr_rcbarry2', ptfx = 'scr_clown_appears', scale = 0.25 }, -- Puff above the pedestal on each launch
+                smokeOffset = vector3(0.0, 0.0, 0.35), -- Smoke position relative to the pedestal
+                popOffset = vector3(0.0, 0.0, 0.0), -- Where the candle appears relative to the pedestal
+                popHeight = 0.35, -- How far the candle rises out of the pedestal
+                popDuration = 3000, -- ms
+                jumpHeight = 1.25, -- Peak height of the jump arc
+                jumpDuration = 2000, -- ms
+                flips = 1, -- Full flips during the jump
+            },
         },
         particles = { -- Attached to the pedestal prop once the ritual starts
             {
@@ -101,9 +114,9 @@ Config.ReviveRitual = {
             {
                 type = 1, -- Marker type (mapped to the bridge 'marker' field)
                 offset = vector3(0.0, 0.0, -2.0), -- Offset of the marker from the pedestal
-                color = vector3(255, 0, 0), -- Color of the marker
+                color = vector3(0, 0, 100), -- Color of the marker
                 size = vector3(4.0, 4.0, 2.5), -- Scale of the marker
-                alpha = 150, -- Alpha of the marker
+                alpha = 100, -- Alpha of the marker
                 bobUpAndDown = false,
                 drawDistance = 50.0,
             }
