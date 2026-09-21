@@ -1,49 +1,58 @@
 # 📖 Heal with Holy Whacks
 
-A free FiveM resource where the power of the book is... questionable, but effective.
+A free FiveM resource that lets you heal people the old-fashioned way: hitting them with a book.
 
-Smack your friends to health or bring them back from beyond with the mysterious *Healing Book*. Whether they’re injured or flat-out dead, a swift bonk or a strange whispered "prayer" might just do the trick. Just... don’t ask too many questions about where the power comes from.
+The **Healing Book** can be used as a melee weapon to heal injured players. If they're already dead, things get a little more involved.
 
 ---
 
 ## 🧰 Features
 
-- 🔨 Use the **Healing Book** as a melee weapon to heal living players  
-- 🕯️ If a player is dead, hitting them starts a **ritual-like revival** sequence  
-- ⚡ Works with both **QB-Core** and **Ox Inventory**  
-- 🧙 A perfect blend of comedy, mystery, and unexpectedly dark energy  
+* 🔨 Hit living players with the **Healing Book** to heal them
+* 🕯️ Hitting a dead player starts a revival ritual
+* ⚡ Supports **QB-Core** and **Ox Inventory**
+* 📖 Includes the custom book weapon/model
+* 🆓 Free
 
 ---
 
 ## 📦 Installation
 
-1. Drag and drop `mrc-holyman` and `mrc-holyman-book` into your `resources` folder
-2. Download and install [community_bridge](https://github.com/The-Order-Of-The-Sacred-Framework/community_bridge/tree/dev)
-3. Add `ensure community_bridge` before `ensure mrc-holyman-book` and `ensure mrc-holyman` to your server.cfg
-4. Add the image (`weapon_book.png`) to your inventory's image folder  
-5. Add the item data using the config for your inventory system below  
+1. Drag `mrc-holyman` and `mrc-holyman-book` into your `resources` folder
+2. Download and install `community_bridge`
+3. Make sure `community_bridge` starts before `mrc-holyman-book` and `mrc-holyman` in your `server.cfg`
+4. Add `weapon_book.png` to your inventory's image folder
+5. Add the weapon to your inventory using the appropriate example below
+
+### Resource Order
+
+```cfg
+ensure community_bridge
+ensure mrc-holyman-book
+ensure mrc-holyman
+```
 
 ---
 
-## 📚 Item Config Examples
+## 📚 Item Config
 
-### 🧱 QB-Core
+### QB-Core
+
+Add to `qb-core/shared/weapons.lua`:
 
 ```lua
-['WEAPON_BOOK'] = {
-    ['name'] = 'weapon_book',
-    ['label'] = 'Holy Book',
-    ['weight'] = 1000,
-    ['type'] = 'weapon',
-    ['ammotype'] = nil,
-    ['image'] = 'weapon_book.png',
-    ['unique'] = true,
-    ['useable'] = true,
-    ['description'] = 'Candy Cane'
+[`WEAPON_BOOK`] = {
+    name = 'weapon_book',
+    label = 'Holy Book',
+    weapontype = 'Melee',
+    ammotype = nil,
+    damagereason = 'Healed'
 },
 ```
 
-### 🌀 Ox Inventory
+### Ox Inventory
+
+Add to `ox_inventory/data/weapons.lua`:
 
 ```lua
 ['WEAPON_BOOK'] = {
@@ -56,10 +65,13 @@ Smack your friends to health or bring them back from beyond with the mysterious 
 ---
 
 ## 📸 Preview
-COMING SOON!!!
+
+Coming soon.
 
 ---
 
 ## ❓ Why?
 
-Because sometimes healing takes a little force — and maybe a light sprinkle of mysterious chanting.
+I made a book you can beat people back to life with.
+
+That's pretty much it.
