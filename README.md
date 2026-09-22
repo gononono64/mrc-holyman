@@ -10,7 +10,6 @@ The **Healing Book** can be used as a melee weapon to heal injured players. If t
 
 * 🔨 Hit living players with the **Healing Book** to heal them
 * 🕯️ Hitting a dead player starts a revival ritual
-* ⚡ Supports **QB-Core** and **Ox Inventory**
 * 📖 Includes the custom book weapon/model
 * 🆓 Free
 
